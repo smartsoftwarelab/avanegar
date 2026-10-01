@@ -1,0 +1,153 @@
+:root {
+  --bg-app: #121316;
+  --bg-panel: #1a1c20;
+  --bg-panel-alt: #212429;
+  --border: #2b2e34;
+  --text-primary: #eef0f2;
+  --text-secondary: #8b9199;
+  --accent: #2dd4c4;
+  --accent-soft: rgba(45, 212, 196, 0.12);
+  --live: #f0703e;
+  --live-soft: rgba(240, 112, 62, 0.14);
+  --success: #4ade80;
+  --error: #f2555a;
+}
+
+.tab-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.tab-btn:hover {
+  color: var(--text-primary);
+}
+.tab-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Single source of truth for tab-panel visibility.
+   Nothing else (no Tailwind hidden/flex utility) may control display on
+   .panel-content elements — that was the exact bug that showed the live
+   recorder inside the File tab. Layout rules that used to live as Tailwind
+   utility classes on the HTML now live here instead, once. */
+.panel-content {
+  display: none;
+}
+.panel-content.active {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 56rem;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.req-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #52525b;
+  flex-shrink: 0;
+}
+.req-dot.ok {
+  background: var(--success);
+}
+.req-dot.bad {
+  background: var(--error);
+}
+
+/* Real waveform bars, height driven by live AnalyserNode data in asr-engine.js. */
+#waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 44px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+#waveform.active {
+  opacity: 1;
+}
+.viz-bar {
+  width: 3px;
+  min-height: 3px;
+  background: linear-gradient(to top, var(--accent), #8be9dd);
+  border-radius: 2px;
+  transition: height 0.05s linear;
+}
+#waveform.live .viz-bar {
+  background: linear-gradient(to top, var(--live), #ffb088);
+}
+
+@keyframes pulse-live {
+  0% {
+    box-shadow: 0 0 0 0 var(--live-soft);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(240, 112, 62, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(240, 112, 62, 0);
+  }
+}
+.recording-pulse {
+  animation: pulse-live 1.5s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recording-pulse,
+  .animate-spin {
+    animation: none !important;
+  }
+}
+
+button:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3e46;
+}
+
+/* ---------- Responsive ----------
+   Layout breakpoints (sidebar stacking, widths, overflow) are owned by
+   Tailwind's md: utility classes directly on the elements in index.html —
+   .app-layout / .app-sidebar / .app-main. Do not duplicate that logic here;
+   two systems fighting over the same layout is exactly the bug this file
+   already had once (the panel-visibility conflict). Only fine-tuning that
+   Tailwind's utilities don't cover belongs in this block. */
+@media (max-width: 480px) {
+  #transcriptText,
+  #emptyState {
+    font-size: 0.9rem;
+  }
+  .tab-btn {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  header h1 {
+    font-size: 1rem;
+  }
+}

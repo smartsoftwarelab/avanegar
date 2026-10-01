@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>آوانگار | تبدیل گفتار به متن</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: { fontFamily: { sans: ["Vazirmatn", "sans-serif"] } },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="bg-[var(--bg-app)] text-[var(--text-secondary)] font-sans min-h-screen md:h-screen overflow-y-auto md:overflow-hidden flex flex-col"
+  >
+    <header
+      class="min-h-16 md:h-16 border-b border-[var(--border)] bg-[var(--bg-panel)]/60 flex flex-wrap items-center justify-between gap-2 px-4 md:px-6 py-3 md:py-0 shrink-0"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          id="brandDot"
+          class="w-2.5 h-2.5 rounded-full bg-[var(--border)]"
+        ></div>
+        <h1 class="text-[var(--text-primary)] font-semibold text-lg">
+          آوانگار
+        </h1>
+      </div>
+      <div
+        id="connectionStatus"
+        class="flex items-center gap-2 text-sm"
+        role="status"
+        aria-live="polite"
+      >
+        <span
+          class="w-2 h-2 rounded-full bg-[var(--border)]"
+          id="wsIndicator"
+          aria-hidden="true"
+        ></span>
+        <span id="wsStatusText">در حال اتصال...</span>
+      </div>
+    </header>
+
+    <div class="app-layout flex flex-col md:flex-row flex-1 md:overflow-hidden">
+      <aside
+        class="app-sidebar w-full md:w-72 border-b md:border-b-0 md:border-l border-[var(--border)] bg-[var(--bg-panel)]/40 p-6 flex flex-col gap-6 shrink-0 md:overflow-y-auto"
+      >
+        <div class="space-y-2">
+          <label
+            for="modelSelect"
+            class="block text-xs text-[var(--text-secondary)]"
+            >مدل تبدیل گفتار</label
+          >
+          <select
+            id="modelSelect"
+            class="w-full bg-[var(--bg-panel-alt)] border border-[var(--border)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          >
+            <option value="vosk" selected>Vosk fa-0.42</option>
+            <option value="whisper">Whisper small</option>
+          </select>
+        </div>
+
+        <div class="space-y-3 pt-4 border-t border-[var(--border)]">
+          <h2 class="text-xs text-[var(--text-secondary)]">وضعیت</h2>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-[var(--text-secondary)]">موتور</span>
+            <span
+              id="engineStatus"
+              class="font-medium text-[var(--text-secondary)]"
+              >آماده</span
+            >
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-[var(--text-secondary)]">تأخیر شبکه</span>
+            <span
+              id="latencyMetric"
+              class="text-[var(--text-primary)]"
+              dir="ltr"
+              >—</span
+            >
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-[var(--text-secondary)]">زمان پردازش</span>
+            <span
+              id="processingTimeMetric"
+              class="text-[var(--text-primary)]"
+              dir="ltr"
+              >—</span
+            >
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-4 border-t border-[var(--border)] text-sm">
+          <h2 class="text-xs text-[var(--text-secondary)]">الزامات</h2>
+          <ul
+            class="space-y-1.5 text-[var(--text-secondary)] text-xs leading-relaxed"
+          >
+            <li id="reqMic" class="flex items-center gap-2">
+              <span class="req-dot"></span> دسترسی میکروفون برای حالت زنده لازم
+              است
+            </li>
+            <li id="reqCodec" class="flex items-center gap-2">
+              <span class="req-dot"></span> بررسی پشتیبانی مرورگر...
+            </li>
+            <li>حداکثر حجم فایل: ۱۰۰ مگابایت</li>
+            <li>فرمت‌های فایل: WAV, MP3, OGG, WebM</li>
+          </ul>
+        </div>
+
+        <div
+          id="errorBanner"
+          class="hidden mt-auto bg-[var(--error)]/10 border border-[var(--error)]/30 text-[var(--error)] p-3 rounded-lg text-sm"
+          role="alert"
+        ></div>
+      </aside>
+
+      <main class="app-main flex-1 flex flex-col p-6 overflow-y-auto">
+        <div
+          class="flex gap-4 border-b border-[var(--border)] mb-6"
+          role="tablist"
+        >
+          <button
+            class="tab-btn active"
+            data-target="liveMode"
+            role="tab"
+            aria-selected="true"
+          >
+            شنود زنده
+          </button>
+          <button
+            class="tab-btn"
+            data-target="fileMode"
+            role="tab"
+            aria-selected="false"
+          >
+            پردازش فایل
+          </button>
+        </div>
+
+        <!-- LIVE MODE -->
+        <div id="liveMode" class="panel-content active" role="tabpanel">
+          <div
+            class="flex flex-col gap-4 bg-[var(--bg-panel)] border border-[var(--border)] rounded-xl p-4"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <button
+                  id="btnRecord"
+                  class="relative flex items-center justify-center w-12 h-12 rounded-full bg-[var(--bg-panel-alt)] hover:brightness-110 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-pressed="false"
+                  aria-label="شروع ضبط صدا"
+                >
+                  <svg
+                    class="w-5 h-5 text-[var(--text-primary)]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                </button>
+                <div>
+                  <div
+                    class="text-[var(--text-primary)] font-medium text-sm flex items-center gap-2"
+                  >
+                    <span
+                      id="recordIndicator"
+                      class="w-2 h-2 rounded-full bg-[var(--live)] opacity-0"
+                      aria-hidden="true"
+                    ></span>
+                    <span id="recordText">آماده ضبط</span>
+                  </div>
+                  <div
+                    id="recordTimer"
+                    class="text-[var(--text-secondary)] text-xs mt-1"
+                    dir="ltr"
+                  >
+                    00:00
+                  </div>
+                </div>
+              </div>
+              <button
+                id="btnStopLive"
+                class="hidden px-4 py-2 bg-[var(--live-soft)] text-[var(--live)] hover:brightness-110 rounded-lg text-sm font-medium transition"
+              >
+                پایان ضبط
+              </button>
+            </div>
+            <div id="waveform" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <!-- FILE MODE -->
+        <div id="fileMode" class="panel-content" role="tabpanel">
+          <div
+            id="dropZone"
+            class="border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] bg-[var(--bg-panel)]/50 rounded-xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer relative"
+          >
+            <input
+              type="file"
+              id="audioUpload"
+              accept="audio/*"
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              aria-label="انتخاب فایل صوتی"
+            />
+            <svg
+              class="w-10 h-10 text-[var(--text-secondary)] mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p class="text-[var(--text-primary)] font-medium">
+              فایل صوتی را اینجا رها کنید
+            </p>
+            <p class="text-[var(--text-secondary)] text-sm mt-2">
+              یا برای انتخاب کلیک کنید
+            </p>
+          </div>
+
+          <div
+            id="fileActions"
+            class="hidden flex items-center justify-between bg-[var(--bg-panel)] border border-[var(--border)] rounded-xl p-4"
+          >
+            <div class="flex items-center gap-3 min-w-0">
+              <svg
+                class="w-6 h-6 text-[var(--accent)] shrink-0"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"
+                />
+              </svg>
+              <div class="min-w-0">
+                <div
+                  id="selectedFileName"
+                  class="text-[var(--text-primary)] text-sm truncate"
+                  dir="ltr"
+                >
+                  audio.wav
+                </div>
+                <div
+                  id="selectedFileSize"
+                  class="text-[var(--text-secondary)] text-xs"
+                  dir="ltr"
+                ></div>
+              </div>
+            </div>
+            <button
+              id="btnProcessFile"
+              class="px-5 py-2 bg-[var(--accent)] hover:brightness-110 text-[#0a1614] rounded-lg text-sm font-semibold transition shrink-0"
+            >
+              شروع پردازش
+            </button>
+          </div>
+        </div>
+
+        <!-- TRANSCRIPT -->
+        <div
+          class="flex flex-col flex-1 mt-6 max-w-4xl w-full mx-auto bg-[var(--bg-panel)] border border-[var(--border)] rounded-xl overflow-hidden relative"
+        >
+          <div
+            id="transcriptLoader"
+            class="hidden absolute inset-0 bg-[var(--bg-panel)]/85 backdrop-blur-sm z-10 flex flex-col items-center justify-center"
+          >
+            <div
+              class="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"
+              aria-hidden="true"
+            ></div>
+            <span class="text-[var(--text-secondary)] text-sm mt-3"
+              >در حال پردازش...</span
+            >
+          </div>
+
+          <div
+            class="bg-[var(--bg-panel-alt)] px-4 py-2 border-b border-[var(--border)] flex justify-between items-center shrink-0"
+          >
+            <span class="text-xs text-[var(--text-secondary)]">متن رونوشت</span>
+            <div class="flex gap-2">
+              <button
+                id="btnCopy"
+                class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded hover:bg-[var(--bg-panel)] transition disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label="کپی متن"
+                disabled
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+              <button
+                id="btnDownload"
+                class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded hover:bg-[var(--bg-panel)] transition disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label="دانلود متن"
+                disabled
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="p-6 flex-1 overflow-y-auto relative">
+            <div
+              id="emptyState"
+              class="absolute inset-0 flex items-center justify-center text-[var(--text-secondary)] text-sm px-6 text-center"
+            >
+              رونوشت اینجا نمایش داده می‌شود — ضبط زنده را شروع کنید یا یک فایل
+              بارگذاری کنید
+            </div>
+            <p
+              id="transcriptText"
+              class="hidden text-[var(--text-primary)] text-base leading-relaxed whitespace-pre-wrap"
+              aria-live="polite"
+            >
+              <span id="finalTranscript"></span
+              ><span
+                id="partialTranscript"
+                class="text-[var(--text-secondary)] italic"
+              ></span>
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
