@@ -142,4 +142,6 @@ http://localhost:8000
 
 A short demonstration of the Avanegar application.
 
-[▶️ Watch the Demo](docs/demo/avanegar-demo.mp4)
+
+https://github.com/user-attachments/assets/033e887b-7dea-4262-a152-83a5db45e1a0
+
