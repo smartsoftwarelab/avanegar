@@ -135,3 +135,11 @@ http://localhost:8000
 | Vosk model not found             | Check that `models/fa-0.42/am/final.mdl` exists.                           |
 | CUDA libraries unavailable       | Whisper can fall back to CPU according to the configured device selection. |
 | Gemini `403 Forbidden`           | Check that `GEMINI_API_KEY` is valid and correctly configured.             |
+
+---
+
+## 🎥 Demo
+
+A short demonstration of the Avanegar application.
+
+[▶️ Watch the Demo](docs/demo/avanegar-demo.mp4)
