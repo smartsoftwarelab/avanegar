@@ -149,4 +149,4 @@ https://github.com/user-attachments/assets/033e887b-7dea-4262-a152-83a5db45e1a0
 
 ## 📄 Poster
 
-[![Avanegar Poster](https://raw.githubusercontent.com/smartsoftwarelab/avanegar/main/docs/poster/avanegar-poster.png)](https://raw.githubusercontent.com/smartsoftwarelab/avanegar/main/docs/poster/avanegar-poster.png)
+<img width="1671" height="941" alt="avanegar-poster" src="https://github.com/user-attachments/assets/677efc7a-306d-4a0b-a16f-a6a7eb20dece" />
