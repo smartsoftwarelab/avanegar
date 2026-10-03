@@ -145,3 +145,10 @@ A short demonstration of the Avanegar application.
 
 https://github.com/user-attachments/assets/033e887b-7dea-4262-a152-83a5db45e1a0
 
+---
+
+## 📄 Poster
+
+The project poster:
+
+[🖼️ View Poster](docs/poster/avanegar-poster.png)
